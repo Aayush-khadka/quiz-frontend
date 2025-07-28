@@ -53,7 +53,7 @@ export default function JoinRoom() {
       );
 
       const hostname = await fetch(
-        `https://quiz-app-q5tj.onrender.com/room/host/${cleanRoomCode}`,
+        `https://quiz-app-q5tj.onrender.com/api/v1/room/host/${cleanRoomCode}`,
         {
           method: "GET",
           headers: {
