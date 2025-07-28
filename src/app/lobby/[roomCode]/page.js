@@ -23,7 +23,7 @@ export default function LobbyPage() {
       return;
     }
 
-    const socket = io("http://localhost:5000");
+    const socket = io("https://quiz-app-q5tj.onrender.com");
     socketRef.current = socket;
 
     socket.on("connect", () => {
