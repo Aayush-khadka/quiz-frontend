@@ -42,7 +42,7 @@ export default function JoinRoom() {
       }
 
       const res = await fetch(
-        `http://https://quiz-app-q5tj.onrender.com/api/v1/room/join/${cleanRoomCode}`,
+        `https://quiz-app-q5tj.onrender.com/api/v1/room/join/${cleanRoomCode}`,
         {
           method: "POST",
           headers: {
