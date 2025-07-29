@@ -2,11 +2,9 @@
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { io } from "socket.io-client";
-import dotenv from "dotenv";
-dotenv.config();
 
 export default function ResultsPage() {
-  const URL = process.env.URL;
+  const URL = process.env.NEXT_PUBLIC_URL;
   const { roomCode } = useParams();
   const router = useRouter();
   const [leaderboard, setLeaderboard] = useState([]);

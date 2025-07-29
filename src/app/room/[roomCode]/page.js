@@ -2,11 +2,9 @@
 
 import { useState, useEffect, use } from "react";
 import { io } from "socket.io-client";
-import dotenv from "dotenv";
-dotenv.config();
 
 export default function RoomPage({ params }) {
-  const URL = process.env.URL;
+  const URL = process.env.NEXT_PUBLIC_URL;
   const { roomCode } = use(params);
   const [socket, setSocket] = useState(null);
   const [players, setPlayers] = useState([]);

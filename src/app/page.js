@@ -1,8 +1,347 @@
+// "use client";
+
+// import { useState, useEffect } from "react";
+// import { useRouter } from "next/navigation";
+
+// export default function Home() {
+//   const router = useRouter();
+//   const URL = process.env.NEXT_PUBLIC_URL || process.env.URL;
+//   const [form, setForm] = useState({
+//     name: "",
+//     room_code: "",
+//   });
+//   const [error, setError] = useState("");
+//   const [loading, setLoading] = useState(false);
+//   const [showErrorDialog, setShowErrorDialog] = useState(false);
+
+//   const handleChange = (e) => {
+//     const { name, value } = e.target;
+//     setForm((prev) => ({
+//       ...prev,
+//       [name]: name === "room_code" ? value.toUpperCase() : value,
+//     }));
+//     // Clear error when user starts typing
+//     if (error) {
+//       setError("");
+//       setShowErrorDialog(false);
+//     }
+//   };
+
+//   const validateForm = () => {
+//     const cleanName = form.name.trim();
+//     const cleanRoomCode = form.room_code.trim().toUpperCase();
+
+//     if (!cleanName && !cleanRoomCode) {
+//       return "Please enter both your name and room code to continue.";
+//     }
+
+//     if (!cleanName) {
+//       return "Please enter your name to join the room.";
+//     }
+
+//     if (!cleanRoomCode) {
+//       return "Please enter a room code to join.";
+//     }
+
+//     if (cleanName.length < 2) {
+//       return "Your name must be at least 2 characters long.";
+//     }
+
+//     if (cleanRoomCode.length < 4) {
+//       return "Room code must be at least 4 characters long.";
+//     }
+
+//     if (!/^[A-Z0-9]+$/.test(cleanRoomCode)) {
+//       return "Room code can only contain letters and numbers.";
+//     }
+
+//     return null;
+//   };
+
+//   const showError = (message) => {
+//     setError(message);
+//     setShowErrorDialog(true);
+//   };
+
+//   // Auto-dismiss toast after 5 seconds
+//   useEffect(() => {
+//     if (showErrorDialog) {
+//       const timer = setTimeout(() => {
+//         setShowErrorDialog(false);
+//         setError("");
+//       }, 5000);
+
+//       return () => clearTimeout(timer);
+//     }
+//   }, [showErrorDialog]);
+
+//   const closeErrorDialog = () => {
+//     setShowErrorDialog(false);
+//     setError("");
+//   };
+
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+
+//     // Client-side validation
+//     const validationError = validateForm();
+//     if (validationError) {
+//       showError(validationError);
+//       return;
+//     }
+
+//     setLoading(true);
+
+//     try {
+//       const cleanName = form.name.trim();
+//       const cleanRoomCode = form.room_code.trim().toUpperCase();
+
+//       // Real API calls
+//       const res = await fetch(`${URL}/api/v1/room/join/${cleanRoomCode}`, {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+//         body: JSON.stringify({ name: cleanName }),
+//       });
+
+//       const hostname = await fetch(`${URL}/api/v1/room/host/${cleanRoomCode}`, {
+//         method: "GET",
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+//       });
+
+//       if (!hostname.ok) {
+//         const result = await hostname.json().catch(() => ({}));
+//         throw new Error(
+//           result.message ||
+//             "Room not found. Please check your room code and try again."
+//         );
+//       }
+
+//       if (!res.ok) {
+//         const result = await res.json().catch(() => ({}));
+//         throw new Error(
+//           result.message || "Failed to join room. Please try again."
+//         );
+//       }
+
+//       const host_validation = await hostname.json();
+
+//       if (!host_validation.statuscode || !host_validation.data) {
+//         throw new Error(
+//           host_validation.message || "Room validation failed. Please try again."
+//         );
+//       }
+
+//       const data = await res.json();
+//       if (!data.statuscode || !data.data) {
+//         throw new Error(
+//           data.message || "Failed to join room. Please try again."
+//         );
+//       }
+
+//       const { room_code, userId, playerName } = data.data;
+//       const { host_name } = host_validation.data;
+
+//       // Store in localStorage
+//       localStorage.setItem("playerName", playerName || cleanName);
+//       localStorage.setItem("hostName", host_name);
+//       localStorage.setItem("userId", userId);
+//       localStorage.setItem("roomCode", room_code);
+
+//       // Navigate to room lobby
+//       router.push(`/lobby/${cleanRoomCode}`);
+//     } catch (err) {
+//       showError(err.message);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handleCreateRoom = () => {
+//     router.push("/room/create");
+//   };
+
+//   // Error Toast Component
+//   const ErrorToast = () => {
+//     if (!showErrorDialog) return null;
+
+//     return (
+//       <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
+//         <div className="bg-red-50 border-4 border-red-500 shadow-[4px_4px_0px_rgba(239,68,68,1)] p-4 max-w-sm">
+//           <div className="flex items-start space-x-3">
+//             <div className="text-2xl">⚠️</div>
+//             <div className="flex-1">
+//               <p className="text-red-800 font-medium">{error}</p>
+//             </div>
+//             <button
+//               onClick={closeErrorDialog}
+//               className="text-red-600 hover:text-red-800 font-bold text-xl leading-none"
+//             >
+//               ×
+//             </button>
+//           </div>
+//         </div>
+//       </div>
+//     );
+//   };
+
+//   return (
+//     <div className="min-h-screen bg-gray-50">
+//       {/* Error Toast */}
+//       <ErrorToast />
+
+//       {/* Header */}
+//       <div className="bg-white border-b-4 border-black px-6 py-4">
+//         <div className="max-w-6xl mx-auto flex items-center justify-between">
+//           <div className="bg-black text-white px-4 py-2 border-2 border-black">
+//             <h1 className="text-2xl font-bold">QUIZ APP</h1>
+//           </div>
+
+//           <div className="flex space-x-3">
+//             <button className="h-10 border-2 border-black px-4 py-2 bg-[#A6FAFF] hover:bg-[#79F7FF] hover:shadow-[2px_2px_0px_rgba(0,0,0,1)] active:bg-[#00E1EF] text-sm font-medium text-black transition-all">
+//               How to Play
+//             </button>
+//             <button className="h-10 border-2 border-black px-4 py-2 bg-[#B8FF9F] hover:bg-[#99fc77] hover:shadow-[2px_2px_0px_rgba(0,0,0,1)] active:bg-[#7df752] text-sm font-medium text-black transition-all">
+//               About
+//             </button>
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* Main Content */}
+//       <div className="max-w-2xl mx-auto px-6 py-12">
+//         {/* Welcome Section */}
+//         <div className="text-center mb-12">
+//           <h2 className="text-4xl font-bold text-black mb-4">
+//             Join a Quiz Room
+//           </h2>
+//           <p className="text-lg text-gray-700 max-w-md mx-auto">
+//             Enter your name and room code to join an existing quiz, or create a
+//             new room to play with friends.
+//           </p>
+//         </div>
+
+//         {/* Main Form Card */}
+//         <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-8 mb-8">
+//           <div className="space-y-6">
+//             {/* Name Input */}
+//             <div>
+//               <label className="block mb-2 font-medium text-black text-lg">
+//                 Your Name
+//               </label>
+//               <input
+//                 type="text"
+//                 name="name"
+//                 value={form.name}
+//                 onChange={handleChange}
+//                 placeholder="Enter your name"
+//                 disabled={loading}
+//                 className="w-full border-2 border-black p-3 text-lg text-black placeholder-gray-500 bg-white focus:outline-none focus:shadow-[2px_2px_0px_rgba(0,0,0,1)] focus:bg-[#FFA6F6] active:shadow-[2px_2px_0px_rgba(0,0,0,1)] disabled:bg-gray-100 disabled:text-gray-500 transition-all"
+//               />
+//             </div>
+
+//             {/* Room Code Input */}
+//             <div>
+//               <label className="block mb-2 font-medium text-black text-lg">
+//                 Room Code
+//               </label>
+//               <input
+//                 type="text"
+//                 name="room_code"
+//                 value={form.room_code}
+//                 onChange={handleChange}
+//                 placeholder="ABCD1234"
+//                 disabled={loading}
+//                 maxLength={10}
+//                 className="w-full border-2 border-black p-3 text-xl font-mono text-center tracking-widest text-black placeholder-gray-400 bg-white focus:outline-none focus:shadow-[2px_2px_0px_rgba(0,0,0,1)] focus:bg-[#FFA6F6] active:shadow-[2px_2px_0px_rgba(0,0,0,1)] disabled:bg-gray-100 disabled:text-gray-500 transition-all"
+//               />
+//             </div>
+
+//             {/* Submit Button */}
+//             <button
+//               onClick={handleSubmit}
+//               disabled={loading}
+//               className="w-full h-14 border-2 border-black p-3 bg-[#B8FF9F] hover:bg-[#99fc77] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] active:bg-[#7df752] disabled:bg-gray-300 disabled:text-gray-500 transition-all font-medium text-lg text-black"
+//             >
+//               {loading ? "Joining Room..." : "Join Room"}
+//             </button>
+//           </div>
+//         </div>
+
+//         {/* Divider */}
+//         <div className="flex items-center my-8">
+//           <div className="flex-1 border-t-2 border-black border-dashed"></div>
+//           <span className="px-4 text-lg font-medium text-gray-600">OR</span>
+//           <div className="flex-1 border-t-2 border-black border-dashed"></div>
+//         </div>
+
+//         {/* Create Room Section */}
+//         <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-8">
+//           <div className="text-center">
+//             <h3 className="text-2xl font-bold text-black mb-4">
+//               Create New Room
+//             </h3>
+//             <p className="text-gray-700 mb-6">
+//               Start your own quiz and invite friends to join
+//             </p>
+
+//             <button
+//               onClick={handleCreateRoom}
+//               className="h-14 border-2 border-black px-8 py-3 bg-[#FFA6F6] hover:bg-[#fa8cef] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] active:bg-[#f774ea] transition-all font-medium text-lg text-black"
+//             >
+//               Create New Room
+//             </button>
+//           </div>
+//         </div>
+
+//   {/* Features Grid */}
+//   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+//     <div className="bg-white border-2 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] p-6 text-center hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-all">
+//       <div className="text-3xl mb-3">🎯</div>
+//       <h4 className="font-bold text-lg mb-2 text-black">
+//         Real-time Quiz
+//       </h4>
+//       <p className="text-gray-600 text-sm">
+//         Play live quizzes with friends and compete for the highest score
+//       </p>
+//     </div>
+
+//     <div className="bg-white border-2 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] p-6 text-center hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-all">
+//       <div className="text-3xl mb-3">👥</div>
+//       <h4 className="font-bold text-lg mb-2 text-black">Multiplayer</h4>
+//       <p className="text-gray-600 text-sm">
+//         Join rooms with multiple players and see live leaderboards
+//       </p>
+//     </div>
+
+//     <div className="bg-white border-2 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] p-6 text-center hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-all">
+//       <div className="text-3xl mb-3">🏆</div>
+//       <h4 className="font-bold text-lg mb-2 text-black">Compete</h4>
+//       <p className="text-gray-600 text-sm">
+//         Track your progress and climb the leaderboards
+//       </p>
+//     </div>
+//   </div>
+// </div>
+
+//       {/* Footer */}
+//       <div className="border-t-4 border-black bg-white py-8 mt-16">
+//         <div className="max-w-6xl mx-auto px-6 text-center">
+//           <p className="text-gray-600">
+//             © 2025 Quiz App. Ready to test your knowledge?
+//           </p>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 
 export default function Home() {
   const router = useRouter();
@@ -13,6 +352,7 @@ export default function Home() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -20,29 +360,83 @@ export default function Home() {
       ...prev,
       [name]: name === "room_code" ? value.toUpperCase() : value,
     }));
+    // Clear error when user starts typing
+    if (error) {
+      setError("");
+      setShowErrorDialog(false);
+    }
+  };
+
+  const validateForm = () => {
+    const cleanName = form.name.trim();
+    const cleanRoomCode = form.room_code.trim().toUpperCase();
+
+    if (!cleanName && !cleanRoomCode) {
+      return "Please enter both your name and room code to continue.";
+    }
+
+    if (!cleanName) {
+      return "Please enter your name to join the room.";
+    }
+
+    if (!cleanRoomCode) {
+      return "Please enter a room code to join.";
+    }
+
+    if (cleanName.length < 2) {
+      return "Your name must be at least 2 characters long.";
+    }
+
+    if (cleanRoomCode.length < 4) {
+      return "Room code must be at least 4 characters long.";
+    }
+
+    if (!/^[A-Z0-9]+$/.test(cleanRoomCode)) {
+      return "Room code can only contain letters and numbers.";
+    }
+
+    return null;
+  };
+
+  const showError = (message) => {
+    setError(message);
+    setShowErrorDialog(true);
+  };
+
+  // Auto-dismiss toast after 5 seconds
+  useEffect(() => {
+    if (showErrorDialog) {
+      const timer = setTimeout(() => {
+        setShowErrorDialog(false);
+        setError("");
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorDialog]);
+
+  const closeErrorDialog = () => {
+    setShowErrorDialog(false);
+    setError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+
+    // Client-side validation
+    const validationError = validateForm();
+    if (validationError) {
+      showError(validationError);
+      return;
+    }
+
     setLoading(true);
 
     try {
       const cleanName = form.name.trim();
       const cleanRoomCode = form.room_code.trim().toUpperCase();
 
-      if (!cleanName || !cleanRoomCode) {
-        throw new Error("Both name and room code are required.");
-      }
-
-      if (cleanName.length < 2) {
-        throw new Error("Name must be at least 2 characters long.");
-      }
-
-      if (cleanRoomCode.length < 4) {
-        throw new Error("Room code must be at least 4 characters long.");
-      }
-
+      // Real API calls
       const res = await fetch(`${URL}/api/v1/room/join/${cleanRoomCode}`, {
         method: "POST",
         headers: {
@@ -60,190 +454,240 @@ export default function Home() {
 
       if (!hostname.ok) {
         const result = await hostname.json().catch(() => ({}));
-        throw new Error(result.message || "Room not found.");
+        throw new Error(
+          result.message ||
+            "Room not found. Please check your room code and try again."
+        );
       }
 
       if (!res.ok) {
         const result = await res.json().catch(() => ({}));
-        throw new Error(result.message || "Room not found.");
+        throw new Error(
+          result.message || "Failed to join room. Please try again."
+        );
       }
 
       const host_validation = await hostname.json();
 
       if (!host_validation.statuscode || !host_validation.data) {
-        throw new Error(host_validation.message || "Room validation failed.");
+        throw new Error(
+          host_validation.message || "Room validation failed. Please try again."
+        );
       }
 
       const data = await res.json();
       if (!data.statuscode || !data.data) {
-        throw new Error(data.message || "Room validation failed.");
+        throw new Error(
+          data.message || "Failed to join room. Please try again."
+        );
       }
 
       const { room_code, userId, playerName } = data.data;
       const { host_name } = host_validation.data;
 
+      // Store in localStorage
       localStorage.setItem("playerName", playerName || cleanName);
       localStorage.setItem("hostName", host_name);
       localStorage.setItem("userId", userId);
       localStorage.setItem("roomCode", room_code);
 
+      // Navigate to room lobby
       router.push(`/lobby/${cleanRoomCode}`);
     } catch (err) {
-      setError(err.message);
+      showError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleCreateRoom = () => {
+    router.push("/room/create");
+  };
+
+  const handleHowToPlayPage = () => {
+    router.push("/how-to-play");
+  };
+
+  const handleAbout = () => {
+    router.push("/about");
+  };
+
+  // Error Toast Component
+  const ErrorToast = () => {
+    if (!showErrorDialog) return null;
+
+    return (
+      <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
+        <div className="bg-red-50 border-4 border-red-500 shadow-[4px_4px_0px_rgba(239,68,68,1)] p-4 max-w-sm">
+          <div className="flex items-start space-x-3">
+            <div className="text-2xl">⚠️</div>
+            <div className="flex-1">
+              <p className="text-red-800 font-medium">{error}</p>
+            </div>
+            <button
+              onClick={closeErrorDialog}
+              className="text-red-600 hover:text-red-800 font-bold text-xl leading-none"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="font-sans min-h-screen bg-gray-50">
-      {/* Header Section */}
-      <div className="flex flex-col items-center justify-center pt-20 pb-12">
-        <Image
-          className="dark:invert mb-8"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <h1 className="text-4xl font-bold text-gray-800 mb-4 text-center">
-          Welcome to Room Chat
-        </h1>
-        <p className="text-gray-600 text-lg text-center max-w-md">
-          Join an existing room or create a new one to start chatting with
-          friends.
-        </p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Error Toast */}
+      <ErrorToast />
+
+      {/* Header */}
+      <div className="bg-white border-b-4 border-black px-4 py-3">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div className="bg-black text-white px-4 py-2 border-2 border-black">
+            <h1 className="text-xl font-bold">QUIZ APP</h1>
+          </div>
+
+          <div className="flex space-x-3">
+            <button
+              className="h-8 border-2 border-black px-4 py-2 bg-[#A6FAFF] hover:bg-[#79F7FF] hover:shadow-[2px_2px_0px_rgba(0,0,0,1)] active:bg-[#00E1EF] text-sm font-medium text-black transition-all flex items-center justify-center"
+              onClick={handleHowToPlayPage}
+            >
+              How to Play
+            </button>
+            <button
+              className="h-8 border-2 border-black px-4 py-2 bg-[#B8FF9F] hover:bg-[#99fc77] hover:shadow-[2px_2px_0px_rgba(0,0,0,1)] active:bg-[#7df752] text-sm font-medium text-black transition-all flex items-center justify-center"
+              onClick={handleAbout}
+            >
+              About
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex items-center justify-center px-4 pb-20">
-        <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <h2 className="text-2xl font-bold text-center text-gray-800">
-              Join a Room
-            </h2>
+      <div className="max-w-lg mx-auto px-4 py-8">
+        {/* Welcome Section */}
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-black mb-4">
+            Join a Quiz Room
+          </h2>
+          <p className="text-sm text-gray-700 max-w-md mx-auto">
+            Enter your name and room code to join an existing quiz, or create a
+            new room to play with friends.
+          </p>
+        </div>
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 p-3 rounded-xl">
-                <p className="text-red-600 text-center font-semibold text-sm">
-                  {error}
-                </p>
-              </div>
-            )}
-
+        {/* Main Form Card */}
+        <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 mb-6">
+          <div className="space-y-4">
+            {/* Name Input */}
             <div>
-              <label
-                htmlFor="name"
-                className="block mb-2 font-medium text-gray-700"
-              >
+              <label className="block mb-2 font-medium text-black text-sm">
                 Your Name
               </label>
               <input
-                id="name"
                 type="text"
                 name="name"
                 value={form.name}
                 onChange={handleChange}
                 placeholder="Enter your name"
-                required
                 disabled={loading}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border-2 border-black p-2 text-sm text-black placeholder-gray-500 bg-white focus:outline-none focus:bg-[#FFA6F6] active:shadow-[2px_2px_0px_rgba(0,0,0,1)] disabled:bg-gray-100 disabled:text-gray-500 transition-all"
               />
             </div>
 
+            {/* Room Code Input */}
             <div>
-              <label
-                htmlFor="room_code"
-                className="block mb-2 font-medium text-gray-700"
-              >
+              <label className="block mb-2 font-medium text-black text-sm">
                 Room Code
               </label>
               <input
-                id="room_code"
                 type="text"
                 name="room_code"
                 value={form.room_code}
                 onChange={handleChange}
-                placeholder="Enter room code"
-                required
+                placeholder="ABCD1234"
                 disabled={loading}
                 maxLength={10}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 font-mono text-lg text-center text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border-2 border-black p-2 text-sm font-mono text-center tracking-widest text-black placeholder-gray-400 bg-white focus:outline-none focus:bg-[#FFA6F6] active:shadow-[2px_2px_0px_rgba(0,0,0,1)] disabled:bg-gray-100 disabled:text-gray-500 transition-all"
               />
             </div>
 
+            {/* Submit Button */}
             <button
-              type="submit"
+              onClick={handleSubmit}
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3 px-4 rounded-xl transition duration-200"
+              className="w-full h-12 border-2 border-black p-2 bg-[#B8FF9F] hover:bg-[#99fc77] disabled:bg-gray-300 disabled:text-gray-500 transition-all font-medium text-sm text-black"
             >
-              {loading ? "Joining..." : "Join Room"}
+              {loading ? "Joining Room..." : "Join Room"}
             </button>
-          </form>
+          </div>
+        </div>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have a room?{" "}
-              <button
-                onClick={() => router.push("/create")}
-                className="text-blue-600 hover:underline font-medium"
-              >
-                Create one
-              </button>
+        {/* Divider */}
+        <div className="flex items-center my-6">
+          <div className="flex-1 border-t-2 border-black border-dashed"></div>
+          <span className="px-4 text-sm font-medium text-gray-600">OR</span>
+          <div className="flex-1 border-t-2 border-black border-dashed"></div>
+        </div>
+
+        {/* Create Room Section */}
+        <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6">
+          <div className="text-center">
+            <h3 className="text-xl font-bold text-black mb-4">
+              Create New Room
+            </h3>
+            <p className="text-gray-700 mb-4">
+              Start your own quiz and invite friends to join
+            </p>
+
+            <button
+              onClick={handleCreateRoom}
+              className="h-12 border-2 border-black px-6 py-3 bg-[#FFA6F6] hover:bg-[#fa8cef] active:bg-[#f774ea] transition-all font-medium text-sm text-black"
+            >
+              Create New Room
+            </button>
+          </div>
+        </div>
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+          <div className="bg-white border-2 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] p-4 text-center hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-all">
+            <div className="text-2xl mb-2">🎯</div>
+            <h4 className="font-bold text-base mb-2 text-black">
+              Real-time Quiz
+            </h4>
+            <p className="text-gray-600 text-xs">
+              Play live quizzes with friends and compete for the highest score
+            </p>
+          </div>
+
+          <div className="bg-white border-2 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] p-4 text-center hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-all">
+            <div className="text-2xl mb-2">👥</div>
+            <h4 className="font-bold text-base mb-2 text-black">Multiplayer</h4>
+            <p className="text-gray-600 text-xs">
+              Join rooms with multiple players and see live leaderboards
+            </p>
+          </div>
+
+          <div className="bg-white border-2 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] p-4 text-center hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-all">
+            <div className="text-2xl mb-2">🏆</div>
+            <h4 className="font-bold text-base mb-2 text-black">Compete</h4>
+            <p className="text-gray-600 text-xs">
+              Track your progress and climb the leaderboards
             </p>
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="flex gap-6 flex-wrap items-center justify-center py-8 border-t border-gray-200">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4 text-gray-600"
-          href="https://nextjs.org/learn"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4 text-gray-600"
-          href="https://vercel.com/templates?framework=next.js"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4 text-gray-600"
-          href="https://nextjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      <div className="border-t-4 border-black bg-white py-6 mt-12">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <p className="text-gray-600">
+            © 2025 Quiz App. Ready to test your knowledge?
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

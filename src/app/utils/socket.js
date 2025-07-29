@@ -1,6 +1,7 @@
 import { io } from "socket.io-client";
 
-const socket = io("https://quiz-app-q5tj.onrender.com", {
+const URL = process.env.NEXT_PUBLIC_URL;
+const socket = io(`${URL}`, {
   withCredentials: true,
 });
 

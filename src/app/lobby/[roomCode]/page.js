@@ -1,14 +1,12 @@
 "use client";
-import dotenv from "dotenv";
+
 import { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 
 import { useParams } from "next/navigation";
 
-dotenv.config();
-
 export default function LobbyPage() {
-  const URL = process.env.URL;
+  const URL = process.env.NEXT_PUBLIC_URL;
   const { roomCode } = useParams();
   const storedHostName = localStorage.getItem("hostName");
   const socketRef = useRef(null);

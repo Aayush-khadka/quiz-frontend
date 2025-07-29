@@ -2,12 +2,10 @@
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import { io } from "socket.io-client";
-import dotenv from "dotenv";
-dotenv.config();
 
 export default function QuizPage() {
   const { roomCode } = useParams();
-  const URL = process.env.URL;
+  const URL = process.env.NEXT_PUBLIC_URL;
   const router = useRouter();
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);

@@ -2,12 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import dotenv from "dotenv";
-dotenv.config();
 
 export default function JoinRoom() {
   const router = useRouter();
-  const URL = process.env.URL;
+  const URL = process.env.NEXT_PUBLIC_URL;
   const [form, setForm] = useState({
     name: "",
     room_code: "",
