@@ -2,8 +2,11 @@
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { io } from "socket.io-client";
+import dotenv from "dotenv";
+dotenv.config();
 
 export default function ResultsPage() {
+  const URL = process.env.URL;
   const { roomCode } = useParams();
   const router = useRouter();
   const [leaderboard, setLeaderboard] = useState([]);
@@ -11,7 +14,7 @@ export default function ResultsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const socketInstance = io("https://quiz-app-q5tj.onrender.com/", {
+    const socketInstance = io(`${URL}`, {
       transports: ["websocket"],
       upgrade: false,
     });

@@ -3,8 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { io } from "socket.io-client";
+import dotenv from "dotenv";
+dotenv.config();
 
 export default function CreateRoom() {
+  const URL = process.env.URL;
   const router = useRouter();
   const socket = useRef(null);
 
@@ -20,7 +23,7 @@ export default function CreateRoom() {
 
   // Setup socket
   useEffect(() => {
-    socket.current = io("https://quiz-app-q5tj.onrender.com/", {
+    socket.current = io(`${URL}`, {
       withCredentials: true,
     });
 
@@ -57,16 +60,13 @@ export default function CreateRoom() {
     setLoading(true);
 
     try {
-      const res = await fetch(
-        "https://quiz-app-q5tj.onrender.com/api/v1/room/create",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(form),
-        }
-      );
+      const res = await fetch(`${URL}/api/v1/room/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(form),
+      });
 
       const data = await res.json();
 

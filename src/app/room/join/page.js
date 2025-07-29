@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import dotenv from "dotenv";
+dotenv.config();
 
 export default function JoinRoom() {
   const router = useRouter();
+  const URL = process.env.URL;
   const [form, setForm] = useState({
     name: "",
     room_code: "",
@@ -41,26 +44,20 @@ export default function JoinRoom() {
         throw new Error("Room code must be at least 4 characters long.");
       }
 
-      const res = await fetch(
-        `https://quiz-app-q5tj.onrender.com/api/v1/room/join/${cleanRoomCode}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ name: cleanName }),
-        }
-      );
+      const res = await fetch(`${URL}/api/v1/room/join/${cleanRoomCode}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: cleanName }),
+      });
 
-      const hostname = await fetch(
-        `https://quiz-app-q5tj.onrender.com/api/v1/room/host/${cleanRoomCode}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const hostname = await fetch(`${URL}/api/v1/room/host/${cleanRoomCode}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       if (!hostname.ok) {
         const result = await hostname.json().catch(() => ({}));
         throw new Error(result.message || "Room not found.");

@@ -2,8 +2,11 @@
 
 import { useState, useEffect, use } from "react";
 import { io } from "socket.io-client";
+import dotenv from "dotenv";
+dotenv.config();
 
 export default function RoomPage({ params }) {
+  const URL = process.env.URL;
   const { roomCode } = use(params);
   const [socket, setSocket] = useState(null);
   const [players, setPlayers] = useState([]);
@@ -38,7 +41,7 @@ export default function RoomPage({ params }) {
   }, [loading, roomData]);
 
   useEffect(() => {
-    const socketInstance = io("https://quiz-app-q5tj.onrender.com/", {
+    const socketInstance = io(`${URL}`, {
       withCredentials: true,
     });
     setSocket(socketInstance);
@@ -115,13 +118,11 @@ export default function RoomPage({ params }) {
       setLoading(true);
       console.log("Fetching room data for code:", roomCode);
 
-      const response = await fetch(
-        `https://quiz-app-q5tj.onrender.com/api/v1/room/lobby/${roomCode}`
-      );
+      const response = await fetch(`${URL}/api/v1/room/lobby/${roomCode}`);
 
       if (!response.ok) {
         console.error(
-          `API endpoint failed. URL: https://quiz-app-q5tj.onrender.com/api/v1/room/lobby/${roomCode}`
+          `API endpoint failed. URL: ${URL}/api/v1/room/lobby/${roomCode}`
         );
         console.error(
           `Status: ${response.status}, StatusText: ${response.statusText}`
@@ -188,7 +189,7 @@ export default function RoomPage({ params }) {
     if (window.confirm("Are you sure you want to delete this question?")) {
       try {
         const response = await fetch(
-          `https://quiz-app-q5tj.onrender.com/api/v1/question/delete/${questionId}`,
+          `${URL}/api/v1/question/delete/${questionId}`,
           {
             method: "DELETE",
           }
@@ -235,7 +236,7 @@ export default function RoomPage({ params }) {
       setUpdating(true);
 
       const response = await fetch(
-        `https://quiz-app-q5tj.onrender.com/api/v1/question/update/${questionId}`,
+        `${URL}/api/v1/question/update/${questionId}`,
         {
           method: "PATCH",
           headers: {
@@ -311,7 +312,7 @@ export default function RoomPage({ params }) {
       setGeneratingQuestions(true);
 
       const response = await fetch(
-        `https://quiz-app-q5tj.onrender.com/api/v1/question/generatemorequestions/${quizData._id}`,
+        `${URL}/api/v1/question/generatemorequestions/${quizData._id}`,
         {
           method: "POST",
           headers: {

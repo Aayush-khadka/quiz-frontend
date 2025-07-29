@@ -1,60 +1,206 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function Home() {
+  const router = useRouter();
+  const URL = process.env.NEXT_PUBLIC_URL || process.env.URL;
+  const [form, setForm] = useState({
+    name: "",
+    room_code: "",
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: name === "room_code" ? value.toUpperCase() : value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const cleanName = form.name.trim();
+      const cleanRoomCode = form.room_code.trim().toUpperCase();
+
+      if (!cleanName || !cleanRoomCode) {
+        throw new Error("Both name and room code are required.");
+      }
+
+      if (cleanName.length < 2) {
+        throw new Error("Name must be at least 2 characters long.");
+      }
+
+      if (cleanRoomCode.length < 4) {
+        throw new Error("Room code must be at least 4 characters long.");
+      }
+
+      const res = await fetch(`${URL}/api/v1/room/join/${cleanRoomCode}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: cleanName }),
+      });
+
+      const hostname = await fetch(`${URL}/api/v1/room/host/${cleanRoomCode}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!hostname.ok) {
+        const result = await hostname.json().catch(() => ({}));
+        throw new Error(result.message || "Room not found.");
+      }
+
+      if (!res.ok) {
+        const result = await res.json().catch(() => ({}));
+        throw new Error(result.message || "Room not found.");
+      }
+
+      const host_validation = await hostname.json();
+
+      if (!host_validation.statuscode || !host_validation.data) {
+        throw new Error(host_validation.message || "Room validation failed.");
+      }
+
+      const data = await res.json();
+      if (!data.statuscode || !data.data) {
+        throw new Error(data.message || "Room validation failed.");
+      }
+
+      const { room_code, userId, playerName } = data.data;
+      const { host_name } = host_validation.data;
+
+      localStorage.setItem("playerName", playerName || cleanName);
+      localStorage.setItem("hostName", host_name);
+      localStorage.setItem("userId", userId);
+      localStorage.setItem("roomCode", room_code);
+
+      router.push(`/lobby/${cleanRoomCode}`);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
+    <div className="font-sans min-h-screen bg-gray-50">
+      {/* Header Section */}
+      <div className="flex flex-col items-center justify-center pt-20 pb-12">
         <Image
-          className="dark:invert"
+          className="dark:invert mb-8"
           src="/next.svg"
           alt="Next.js logo"
           width={180}
           height={38}
           priority
         />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+        <h1 className="text-4xl font-bold text-gray-800 mb-4 text-center">
+          Welcome to Room Chat
+        </h1>
+        <p className="text-gray-600 text-lg text-center max-w-md">
+          Join an existing room or create a new one to start chatting with
+          friends.
+        </p>
+      </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      {/* Main Content */}
+      <div className="flex items-center justify-center px-4 pb-20">
+        <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <h2 className="text-2xl font-bold text-center text-gray-800">
+              Join a Room
+            </h2>
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 p-3 rounded-xl">
+                <p className="text-red-600 text-center font-semibold text-sm">
+                  {error}
+                </p>
+              </div>
+            )}
+
+            <div>
+              <label
+                htmlFor="name"
+                className="block mb-2 font-medium text-gray-700"
+              >
+                Your Name
+              </label>
+              <input
+                id="name"
+                type="text"
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                placeholder="Enter your name"
+                required
+                disabled={loading}
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="room_code"
+                className="block mb-2 font-medium text-gray-700"
+              >
+                Room Code
+              </label>
+              <input
+                id="room_code"
+                type="text"
+                name="room_code"
+                value={form.room_code}
+                onChange={handleChange}
+                placeholder="Enter room code"
+                required
+                disabled={loading}
+                maxLength={10}
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 font-mono text-lg text-center text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3 px-4 rounded-xl transition duration-200"
+            >
+              {loading ? "Joining..." : "Join Room"}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
+              Don't have a room?{" "}
+              <button
+                onClick={() => router.push("/create")}
+                className="text-blue-600 hover:underline font-medium"
+              >
+                Create one
+              </button>
+            </p>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
+      </div>
+
+      {/* Footer */}
+      <footer className="flex gap-6 flex-wrap items-center justify-center py-8 border-t border-gray-200">
         <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+          className="flex items-center gap-2 hover:underline hover:underline-offset-4 text-gray-600"
+          href="https://nextjs.org/learn"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -68,8 +214,8 @@ export default function Home() {
           Learn
         </a>
         <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+          className="flex items-center gap-2 hover:underline hover:underline-offset-4 text-gray-600"
+          href="https://vercel.com/templates?framework=next.js"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -83,8 +229,8 @@ export default function Home() {
           Examples
         </a>
         <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+          className="flex items-center gap-2 hover:underline hover:underline-offset-4 text-gray-600"
+          href="https://nextjs.org"
           target="_blank"
           rel="noopener noreferrer"
         >

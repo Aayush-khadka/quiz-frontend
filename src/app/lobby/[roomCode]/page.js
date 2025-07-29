@@ -1,11 +1,14 @@
 "use client";
-
+import dotenv from "dotenv";
 import { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 
 import { useParams } from "next/navigation";
 
+dotenv.config();
+
 export default function LobbyPage() {
+  const URL = process.env.URL;
   const { roomCode } = useParams();
   const storedHostName = localStorage.getItem("hostName");
   const socketRef = useRef(null);
@@ -23,7 +26,7 @@ export default function LobbyPage() {
       return;
     }
 
-    const socket = io("https://quiz-app-q5tj.onrender.com");
+    const socket = io(`${URL}`);
     socketRef.current = socket;
 
     socket.on("connect", () => {
