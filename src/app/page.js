@@ -545,7 +545,7 @@ export default function Home() {
       <div className="bg-white border-b-4 border-black px-4 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="bg-black text-white px-4 py-2 border-2 border-black">
-            <h1 className="text-xl font-bold">QUIZ APP</h1>
+            <h1 className="text-xl font-bold">INQUIZZIT</h1>
           </div>
 
           <div className="flex space-x-3">

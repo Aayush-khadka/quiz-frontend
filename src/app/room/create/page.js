@@ -526,7 +526,7 @@ export default function CreateRoom() {
         <div className="max-w-4xl mx-auto flex justify-between items-center">
           {/* Logo on the left */}
           <div className="bg-black text-white px-4 py-2 border-2 border-black">
-            <h1 className="text-xl font-bold">QUIZ APP</h1>
+            <h1 className="text-xl font-bold">INQUIZZIT</h1>
           </div>
 
           {/* Back to Home button on the right */}
