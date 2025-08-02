@@ -368,7 +368,6 @@ export default function CreateRoom() {
   const [error, setError] = useState("");
   const [showErrorToast, setShowErrorToast] = useState(false);
 
-  // Setup socket
   useEffect(() => {
     socket.current = io(`${URL}`, { withCredentials: true });
 
@@ -521,15 +520,12 @@ export default function CreateRoom() {
       {/* Error Toast */}
       <ErrorToast />
 
-      {/* Header */}
       <div className="bg-white border-b-4 border-black px-4 py-3">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
-          {/* Logo on the left */}
           <div className="bg-black text-white px-4 py-2 border-2 border-black">
             <h1 className="text-xl font-bold">INQUIZZIT</h1>
           </div>
 
-          {/* Back to Home button on the right */}
           <div className="flex space-x-3">
             <button
               onClick={handleBack}
