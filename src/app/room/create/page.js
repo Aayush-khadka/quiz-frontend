@@ -203,18 +203,6 @@ export default function CreateRoom() {
         </div>
 
         {/* Note */}
-        <div className="bg-blue-50 border-4 border-blue-400 shadow-[4px_4px_0px_rgba(59,130,246,1)] p-4 mb-6">
-          <div className="flex items-start space-x-3">
-            <div className="text-2xl">📝</div>
-            <div className="flex-1">
-              <h4 className="font-bold text-blue-900 text-sm mb-1">Note*</h4>
-              <p className="text-blue-800 text-xs leading-relaxed">
-                You may need to click create button multiple times as our AI
-                generates custom questions for your topic.
-              </p>
-            </div>
-          </div>
-        </div>
 
         {/* Main Form Card */}
         <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 mb-6">

@@ -58,6 +58,37 @@
 //     return null;
 //   };
 
+//   const checkQuizStatus = async (roomCode) => {
+//     try {
+//       const statusRes = await fetch(`${URL}/api/v1/room/status/${roomCode}`, {
+//         method: "GET",
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+//       });
+
+//       if (!statusRes.ok) {
+//         const result = await statusRes.json().catch(() => ({}));
+//         throw new Error(result.message || "Failed to check quiz status.");
+//       }
+
+//       const statusData = await statusRes.json();
+
+//       if (!statusData.statuscode) {
+//         throw new Error(statusData.message || "Failed to check quiz status.");
+//       }
+
+//       // If data is true, quiz has started
+//       if (statusData.data === true) {
+//         throw new Error("Quiz in this room has already started!");
+//       }
+
+//       return true; // Quiz has not started, safe to join
+//     } catch (err) {
+//       throw err;
+//     }
+//   };
+
 //   const showError = (message) => {
 //     setError(message);
 //     setShowErrorDialog(true);
@@ -95,6 +126,9 @@
 //     try {
 //       const cleanName = form.name.trim();
 //       const cleanRoomCode = form.room_code.trim().toUpperCase();
+
+//       // Check quiz status before proceeding
+//       await checkQuizStatus(cleanRoomCode);
 
 //       // Real API calls
 //       const res = await fetch(`${URL}/api/v1/room/join/${cleanRoomCode}`, {
@@ -373,6 +407,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [focusedInput, setFocusedInput] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -385,6 +420,14 @@ export default function Home() {
       setError("");
       setShowErrorDialog(false);
     }
+  };
+
+  const handleInputFocus = (inputName) => {
+    setFocusedInput(inputName);
+  };
+
+  const handleInputBlur = () => {
+    setFocusedInput("");
   };
 
   const validateForm = () => {
@@ -403,12 +446,12 @@ export default function Home() {
       return "Please enter a room code to join.";
     }
 
-    if (cleanName.length < 2) {
-      return "Your name must be at least 2 characters long.";
+    if (cleanName.length < 5) {
+      return "Your name must be at least 5 characters long.";
     }
 
-    if (cleanRoomCode.length < 4) {
-      return "Room code must be at least 4 characters long.";
+    if (cleanRoomCode.length !== 6) {
+      return "Room code must be exactly 6 characters long.";
     }
 
     if (!/^[A-Z0-9]+$/.test(cleanRoomCode)) {
@@ -566,7 +609,7 @@ export default function Home() {
     router.push("/about");
   };
 
-  // Error Toast Component
+  // Enhanced Error Toast Component
   const ErrorToast = () => {
     if (!showErrorDialog) return null;
 
@@ -580,7 +623,7 @@ export default function Home() {
             </div>
             <button
               onClick={closeErrorDialog}
-              className="text-red-600 hover:text-red-800 font-bold text-xl leading-none"
+              className="text-red-600 hover:text-red-800 font-bold text-xl leading-none transition-colors duration-200 hover:bg-red-100 rounded p-1"
             >
               ×
             </button>
@@ -598,19 +641,19 @@ export default function Home() {
       {/* Header */}
       <div className="bg-white border-b-4 border-black px-4 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="bg-black text-white px-4 py-2 border-2 border-black">
+          <div className="bg-black text-white px-4 py-2 border-2 border-black transform hover:scale-105 transition-transform duration-200">
             <h1 className="text-xl font-bold">INQUIZZIT</h1>
           </div>
 
           <div className="flex space-x-3">
             <button
-              className="h-8 border-2 border-black px-4 py-2 bg-[#A6FAFF] hover:bg-[#79F7FF] hover:shadow-[2px_2px_0px_rgba(0,0,0,1)] active:bg-[#00E1EF] text-sm font-medium text-black transition-all flex items-center justify-center"
+              className="h-8 border-2 border-black px-4 py-2 bg-[#A6FAFF] hover:bg-[#79F7FF] hover:shadow-[2px_2px_0px_rgba(0,0,0,1)] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] text-sm font-medium text-black transition-all duration-150 flex items-center justify-center"
               onClick={handleHowToPlayPage}
             >
               How to Play
             </button>
             <button
-              className="h-8 border-2 border-black px-4 py-2 bg-[#B8FF9F] hover:bg-[#99fc77] hover:shadow-[2px_2px_0px_rgba(0,0,0,1)] active:bg-[#7df752] text-sm font-medium text-black transition-all flex items-center justify-center"
+              className="h-8 border-2 border-black px-4 py-2 bg-[#B8FF9F] hover:bg-[#99fc77] hover:shadow-[2px_2px_0px_rgba(0,0,0,1)] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] text-sm font-medium text-black transition-all duration-150 flex items-center justify-center"
               onClick={handleAbout}
             >
               About
@@ -633,22 +676,40 @@ export default function Home() {
         </div>
 
         {/* Main Form Card */}
-        <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 mb-6">
+        <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 mb-6 transform hover:shadow-[10px_10px_0px_rgba(0,0,0,1)] transition-shadow duration-300">
           <div className="space-y-4">
             {/* Name Input */}
             <div>
               <label className="block mb-2 font-medium text-black text-sm">
                 Your Name
+                {form.name.trim().length >= 5 && (
+                  <span className="text-green-500 text-xs ml-2">✓ Valid</span>
+                )}
               </label>
-              <input
-                type="text"
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                placeholder="Enter your name"
-                disabled={loading}
-                className="w-full border-2 border-black p-2 text-sm text-black placeholder-gray-500 bg-white focus:outline-none focus:bg-[#FFA6F6] active:shadow-[2px_2px_0px_rgba(0,0,0,1)] disabled:bg-gray-100 disabled:text-gray-500 transition-all"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  onFocus={() => handleInputFocus("name")}
+                  onBlur={handleInputBlur}
+                  placeholder="Enter your name"
+                  disabled={loading}
+                  className={`w-full border-2 border-black p-2 text-sm text-black placeholder-gray-500 bg-white focus:outline-none disabled:bg-gray-100 disabled:text-gray-500 transition-all duration-200
+                    ${
+                      focusedInput === "name"
+                        ? "bg-[#FFA6F6] shadow-[3px_3px_0px_rgba(0,0,0,1)]"
+                        : "hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+                    }
+                    ${form.name.trim().length >= 5 ? "border-green-500" : ""}`}
+                />
+                {form.name.trim().length >= 5 && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 font-bold">
+                    ✓
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Room Code Input */}
@@ -656,25 +717,58 @@ export default function Home() {
               <label className="block mb-2 font-medium text-black text-sm">
                 Room Code
               </label>
-              <input
-                type="text"
-                name="room_code"
-                value={form.room_code}
-                onChange={handleChange}
-                placeholder="ABCD1234"
-                disabled={loading}
-                maxLength={10}
-                className="w-full border-2 border-black p-2 text-sm font-mono text-center tracking-widest text-black placeholder-gray-400 bg-white focus:outline-none focus:bg-[#FFA6F6] active:shadow-[2px_2px_0px_rgba(0,0,0,1)] disabled:bg-gray-100 disabled:text-gray-500 transition-all"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  name="room_code"
+                  value={form.room_code}
+                  onChange={handleChange}
+                  onFocus={() => handleInputFocus("room_code")}
+                  onBlur={handleInputBlur}
+                  placeholder="ABC123"
+                  disabled={loading}
+                  maxLength={6}
+                  className={`w-full border-2 border-black p-2 text-sm font-mono text-center tracking-[0.3em] text-black placeholder-gray-400 bg-white focus:outline-none disabled:bg-gray-100 disabled:text-gray-500 transition-all duration-200 uppercase
+                    ${
+                      focusedInput === "room_code"
+                        ? "bg-[#FFA6F6] shadow-[3px_3px_0px_rgba(0,0,0,1)]"
+                        : "hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+                    }
+                    ${form.room_code.length === 6 ? "border-green-500" : ""}`}
+                />
+                {form.room_code.length === 6 && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 font-bold">
+                    ✓
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Submit Button */}
             <button
               onClick={handleSubmit}
-              disabled={loading}
-              className="w-full h-12 border-2 border-black p-2 bg-[#B8FF9F] hover:bg-[#99fc77] disabled:bg-gray-300 disabled:text-gray-500 transition-all font-medium text-sm text-black"
+              disabled={
+                loading ||
+                !form.name.trim() ||
+                form.room_code.trim().length !== 6
+              }
+              className={`w-full h-12 border-2 border-black p-2 font-medium text-sm text-black transition-all duration-200
+                ${
+                  loading ||
+                  !form.name.trim() ||
+                  form.room_code.trim().length !== 6
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-[#B8FF9F] hover:bg-[#99fc77] hover:shadow-[3px_3px_0px_rgba(0,0,0,1)] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] transform hover:scale-[1.01]"
+                }`}
             >
-              {loading ? "Joining Room..." : "Join Room"}
+              {loading ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-black border-t-transparent"></div>
+                  <span>Joining Room...</span>
+                </div>
+              ) : (
+                "Join Room"
+              )}
             </button>
           </div>
         </div>
@@ -687,7 +781,7 @@ export default function Home() {
         </div>
 
         {/* Create Room Section */}
-        <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6">
+        <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 transform hover:shadow-[10px_10px_0px_rgba(0,0,0,1)] transition-shadow duration-300">
           <div className="text-center">
             <h3 className="text-xl font-bold text-black mb-4">
               Create New Room
@@ -698,15 +792,16 @@ export default function Home() {
 
             <button
               onClick={handleCreateRoom}
-              className="h-12 border-2 border-black px-6 py-3 bg-[#FFA6F6] hover:bg-[#fa8cef] active:bg-[#f774ea] transition-all font-medium text-sm text-black"
+              className="h-12 border-2 border-black px-6 py-3 bg-[#FFA6F6] hover:bg-[#fa8cef] hover:shadow-[3px_3px_0px_rgba(0,0,0,1)] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] transition-all duration-200 font-medium text-sm text-black transform hover:scale-[1.02]"
             >
               Create New Room
             </button>
           </div>
         </div>
+
         {/* Features Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-          <div className="bg-white border-2 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] p-4 text-center hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-all">
+          <div className="bg-white border-2 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] p-4 text-center hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] hover:transform hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-300">
             <div className="text-2xl mb-2">🧠</div>
             <h4 className="font-bold text-base mb-2 text-black">
               AI-Generated Questions
@@ -717,7 +812,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="bg-white border-2 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] p-4 text-center hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-all">
+          <div className="bg-white border-2 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] p-4 text-center hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] hover:transform hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-300">
             <div className="text-2xl mb-2">⏱️</div>
             <h4 className="font-bold text-base mb-2 text-black">
               Timed Challenges
@@ -727,7 +822,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="bg-white border-2 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] p-4 text-center hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-all">
+          <div className="bg-white border-2 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] p-4 text-center hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] hover:transform hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-300">
             <div className="text-2xl mb-2">📊</div>
             <h4 className="font-bold text-base mb-2 text-black">
               Smart Analytics
