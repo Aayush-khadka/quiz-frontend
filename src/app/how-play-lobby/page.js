@@ -1,16 +1,26 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function HowToPlay() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("host");
-  const storedRoomCode = localStorage.getItem("roomCode");
-  const handleBack = () => {
-    router.push(`/lobby/${storedRoomCode}`);
-  };
+  const [storedRoomCode, setStoredRoomCode] = useState(null);
 
+  useEffect(() => {
+    const code = localStorage.getItem("roomCode");
+    setStoredRoomCode(code);
+  }, []);
+
+  const handleBack = () => {
+    if (storedRoomCode) {
+      router.push(`/lobby/${storedRoomCode}`);
+    } else {
+      // fallback if no roomCode found
+      router.push("/lobby");
+    }
+  };
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
