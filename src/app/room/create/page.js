@@ -107,6 +107,8 @@ export default function CreateRoom() {
     }
   }, [showErrorToast]);
 
+  // Just replace the handleSubmit function - everything else stays the same
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -152,15 +154,25 @@ export default function CreateRoom() {
         );
       }
 
-      const roomCode = data.data;
-      if (!roomCode) {
+      const responseData = data.data;
+      if (!responseData || !responseData.room_code) {
         throw new Error("Room creation failed. Please try again.");
       }
 
+      console.log("🎯 API Response:", responseData);
+
+      // ✅ FIXED: Extract just the room_code string
+      const roomCode = responseData.room_code;
+
+      console.log("🏠 Extracted room code:", roomCode);
+
       localStorage.setItem("hostName", form.host_name);
       localStorage.setItem("playerName", form.host_name);
+      localStorage.setItem("roomCode", roomCode); // Store the room code
+
+      // ✅ FIXED: Pass only the room_code string, not the entire object
       socket.current.emit("create-room", {
-        roomCode,
+        roomCode: roomCode, // Just the string, not the whole object
         hostName: form.host_name,
       });
     } catch (err) {
