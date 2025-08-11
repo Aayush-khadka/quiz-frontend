@@ -297,10 +297,35 @@ export default function RoomPage({ params }) {
     });
   };
 
-  const handleStartQuiz = () => {
+  const handleStartQuiz = async () => {
     if (socket && isHost && !startingQuiz && !quizStarted) {
-      console.log("🟢 Emitting start-quiz for room:", roomCode);
+      console.log("🟢 Starting quiz for room:", roomCode);
       setStartingQuiz(true);
+
+      try {
+        const response = await fetch(
+          `${URL}/api/v1/room/update-status/${roomCode}`,
+          {
+            method: "GET", //
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          console.error(
+            `Update status API failed: ${response.status} - ${response.statusText}`
+          );
+
+          const result = await response.json();
+          console.log("✅ Room status updated successfully:", result);
+        }
+      } catch (error) {
+        console.error("❌ Error calling update-status API:", error);
+      }
+
+      console.log("🟢 Emitting start-quiz socket event for room:", roomCode);
       socket.emit("start-quiz", { roomCode });
     }
   };
