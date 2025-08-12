@@ -44,7 +44,7 @@ export default function HowToPlay() {
           </p>
 
           {/* Video Section */}
-          <div className="max-w-2xl mx-auto mb-6">
+          {/* <div className="max-w-2xl mx-auto mb-6">
             <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-4 rounded-lg">
               <h3 className="text-xl font-bold text-black mb-3">
                 📺 Watch How It Works
@@ -64,7 +64,7 @@ export default function HowToPlay() {
                 started!
               </p>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Tab Navigation */}
